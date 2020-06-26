@@ -20,8 +20,8 @@ public class TaskController {
     private final TaskService taskService;
 
     @Autowired
-    public TaskController(@Qualifier("clientOrgScope") Scope scope,TaskService taskService){
-        this.taskService =taskService;
+    public TaskController(TaskService taskService){
+        this.taskService=taskService;
     }
 
     @RequestMapping(method=RequestMethod.POST)

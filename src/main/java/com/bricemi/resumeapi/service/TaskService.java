@@ -25,7 +25,7 @@ public class TaskService {
     public Task createTask(String title, String desc){
 
         Task newTask = new Task(title,desc);
-        bucket.defaultCollection().insert(IDREF + title.replaceAll(" ","_"),newTask);
+        bucket.defaultCollection().insert(IDREF + title.toUpperCase().replaceAll(" ","_"),newTask);
         LOGGER.info("Create tasks :" + newTask.toString());
 
         return newTask;
