@@ -1,3 +1,13 @@
+storage:
+  host: 127.0.0.1
+  bucket: myresume
+  username: myResumeApp
+  password: 6EQUJ5wow!
+  clientorg:
+    bucket: myresume
+    scope: myResumeApi
+
+
 management:
   endpoints:
     web:

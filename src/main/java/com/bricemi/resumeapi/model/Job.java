@@ -1,14 +1,12 @@
 package com.bricemi.resumeapi.model;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.NonNull;
-import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.List;
 
-@Getter
-@Setter
+@Data
 public class Job {
 
     @NonNull
