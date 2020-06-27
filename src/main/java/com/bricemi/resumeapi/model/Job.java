@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Data
-public class Job {
+public class Job extends AbstractModel{
 
     @NonNull
     private String title;
@@ -21,4 +21,5 @@ public class Job {
     private LocalDate endDate;
 
     private List<Task> tasks;
+
 }

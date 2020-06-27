@@ -1,23 +1,18 @@
 package com.bricemi.resumeapi.model;
 
 import lombok.Data;
-import com.couchbase.client.java.json.JsonObject;
 
 @Data
-public class Task {
+public class Task extends AbstractModel {
 
     private String title;
     private String description;
 
+    public Task(){}
+
     public Task(String title, String description) {
+        super();
         this.title = title;
         this.description = description;
-    }
-
-    public JsonObject toJSON(){
-        return JsonObject.create()
-                .put("type","task")
-                .put("title", title)
-                .put("description",description);
     }
 }
