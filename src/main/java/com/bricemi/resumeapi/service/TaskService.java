@@ -1,5 +1,6 @@
 package com.bricemi.resumeapi.service;
 
+import com.bricemi.resumeapi.model.AbstractModel;
 import com.bricemi.resumeapi.model.Task;
 import com.bricemi.resumeapi.util.Mapper;
 import com.couchbase.client.java.Bucket;
@@ -30,15 +31,22 @@ public class TaskService {
     }
 
     /**
-     * Create single task
+     * Save single task
+     * @param newTask - String
      */
-    public Task createTask(String title, String desc){
-
-        Task newTask = new Task(title,desc);
-        bucket.defaultCollection().insert(newTask.generateIdRef(title),newTask);
-        LOGGER.info("Create tasks :" + newTask.toString());
-
+    public Task saveTask(Task newTask){
+        bucket.defaultCollection().insert(newTask.generateIdRef(),newTask);
         return newTask;
+    }
+
+    /**
+     * Get task
+     * @param title - String - title of the task to get
+     */
+    public Task getTask(String title){
+        return bucket.defaultCollection()
+                .get(AbstractModel.generateIdRef(Task.class,title))
+                .contentAs(Task.class);
     }
 
     /**
@@ -46,14 +54,31 @@ public class TaskService {
      * Need index : CREATE INDEX `typeIdx` ON `myresume-data`(`type`)
      */
     public List<Task> getTasks(){
-        QueryResult result = cluster.query("select title,type,description from `myresume-data` where type = $type ",
+        QueryResult result = cluster.query("select title,type,description from `" + bucket.name() +"` where type = $type ",
             queryOptions().parameters(
-                JsonObject.create().put("type","TASK")
-            ));
+                JsonObject.create()
+                    .put("type","TASK")
+        ));
 
         return result.rowsAsObject()
             .stream()
             .map(r -> Mapper.convert(r.toString(),Task.class))
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Remove singe task
+     * @param title - String
+     */
+    public void removeTask(String title){
+        bucket.defaultCollection().remove(AbstractModel.generateIdRef(Task.class,title));
+    }
+
+    /**
+     * Update Task
+     * @param task - Task
+     */
+    public void updateTask(Task task){
+        bucket.defaultCollection().upsert(task.generateIdRef(),task);
     }
 }

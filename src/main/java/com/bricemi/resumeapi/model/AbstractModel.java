@@ -14,6 +14,17 @@ public class AbstractModel {
     }
 
     public String generateIdRef(String id){
-        return type.concat("::").concat(id.replaceAll(" ","_").toLowerCase());
+        return generateIdRef(getClass(),id);
+    }
+
+    public static String generateIdRef(Class type, String id){
+        String[] classNameArray = type.getName().split("\\.");
+        return classNameArray[classNameArray.length-1]
+            .toUpperCase()
+            .concat("::")
+            .concat(
+                id.replaceAll(" ","_")
+                    .toLowerCase()
+            );
     }
 }
