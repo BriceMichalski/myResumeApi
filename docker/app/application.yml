@@ -1,0 +1,16 @@
+storage:
+  host: couchbase
+  bucket: myresume-data
+  username: myResumeApp
+  password: 6EQUJ5wow!
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+  endpoint:
+    health:
+      show-details: always
