@@ -1,0 +1,17 @@
+FROM maven:3.6.3-adoptopenjdk-11 AS MAVEN_BUILD
+
+COPY pom.xml /build/
+COPY src /build/src
+
+WORKDIR /build/
+RUN mvn package
+
+FROM adoptopenjdk:11-jre-hotspot AS RUN
+
+WORKDIR /app
+COPY --from=MAVEN_BUILD /build/target/*.jar /app/app.jar
+
+COPY ./docker/app/application.yml /app/application.yml
+ENV SPRING_CONFIG_LOCATION="/app/application.yml"
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

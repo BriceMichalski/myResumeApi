@@ -1,15 +1,15 @@
 version: 2.1
 
 jobs:
-  build:
-    docker: # run the steps with Docker
+# CI PART - RUN MAVEN PACKAGE
+# ALWAYS RUN
+  test:
+    docker:
       - image: maven:3.6.3-adoptopenjdk-11
-
     steps:
       - checkout
 
       - restore_cache: # restore the saved cache after the first run or if `pom.xml` has changed
-          # Read about caching dependencies: https://circleci.com/docs/2.0/caching/
           key: circleci-my-resume-api-{{ checksum "pom.xml" }}
 
       - run: mvn dependency:go-offline
@@ -22,5 +22,68 @@ jobs:
       - run: mvn package
 
       - store_test_results: # uploads the test metadata from the `target/surefire-reports` directory so that it can show up in the CircleCI dashboard.
-          # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
           path: target/surefire-reports
+
+# CD PART - BUILD DOCKER IMAGE
+
+  build-docker-image:
+    parameters:
+      phase_suffix:
+        type: string
+    docker: # run the steps with Docker
+      - image: maven:3.6.3-adoptopenjdk-11
+    steps:
+      - setup_remote_docker
+
+      - run:
+          name: Install Docker client
+          command: |
+            apt-get update -y
+            apt-get install \
+                apt-transport-https \
+                ca-certificates \
+                curl \
+                gnupg-agent \
+                software-properties-common -y
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+            add-apt-repository \
+               "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) \
+               stable"
+            apt-get update -y
+            apt-get install docker-ce-cli
+
+      - checkout
+
+      - run:
+          name: Build Docker app image
+          command: |
+            VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version -q -DforceStdout)
+            TAG=$VERSION
+            if [[ $CIRCLE_BRANCH == feature/* ]]; then TAG=$TAG-b.$CIRCLE_BUILD_NUM ; fi
+            docker build -f docker/app/Dockerfile.ci -t docker.pkg.github.com/bricemichalski/myresumeapi/app:$TAG .
+            docker tag docker.pkg.github.com/bricemichalski/myresumeapi/app:$TAG docker.pkg.github.com/bricemichalski/myresumeapi/app:latest<< parameters.phase_suffix >>
+            echo $GH_TOKEN | docker login docker.pkg.github.com -u $GH_USER --password-stdin
+            docker push docker.pkg.github.com/bricemichalski/myresumeapi/app:$TAG
+            docker push docker.pkg.github.com/bricemichalski/myresumeapi/app:latest<< parameters.phase_suffix >>
+
+#  promote-to-stage:
+#    machine: true
+#    steps:
+
+
+workflows:
+  version: 2
+  pipeline:
+    jobs:
+      - test
+
+      - build-docker-image:
+          context: my-resume-api-context
+          phase_suffix: -DEV
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - develop
+
