@@ -1,7 +1,7 @@
 FROM maven:3.6.3-adoptopenjdk-11 AS MAVEN_BUILD
 
 COPY pom.xml /build/
-COPY src /build/src/
+COPY src /build/src/Dockerfile.local
 
 WORKDIR /build/
 RUN mvn package
