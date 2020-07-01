@@ -28,7 +28,7 @@ jobs:
 
   build-docker-image:
     parameters:
-      phase:
+      phase_suffix:
         type: string
     docker: # run the steps with Docker
       - image: maven:3.6.3-adoptopenjdk-11
@@ -59,12 +59,13 @@ jobs:
           name: Build Docker app image
           command: |
             VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version -q -DforceStdout)
-            TAG=$VERSION-<< parameters.phase >>
+            TAG=$VERSION
+            if [[ $CIRCLE_BRANCH == feature/* ]]; then TAG=$TAG-b.$CIRCLE_BUILD_NUM ; fi
             docker build -f docker/app/Dockerfile.ci -t docker.pkg.github.com/bricemichalski/myresumeapi/app:$TAG .
-            docker tag docker.pkg.github.com/bricemichalski/myresumeapi/app:$TAG docker.pkg.github.com/bricemichalski/myresumeapi/app:latest-<< parameters.phase >>
+            docker tag docker.pkg.github.com/bricemichalski/myresumeapi/app:$TAG docker.pkg.github.com/bricemichalski/myresumeapi/app:latest<< parameters.phase_suffix >>
             echo $GH_TOKEN | docker login docker.pkg.github.com -u $GH_USER --password-stdin
             docker push docker.pkg.github.com/bricemichalski/myresumeapi/app:$TAG
-            docker push docker.pkg.github.com/bricemichalski/myresumeapi/app:latest-<< parameters.phase >>
+            docker push docker.pkg.github.com/bricemichalski/myresumeapi/app:latest<< parameters.phase_suffix >>
 
 #  promote-to-stage:
 #    machine: true
@@ -79,5 +80,10 @@ workflows:
 
       - build-docker-image:
           context: my-resume-api-context
-          phase: DEV
+          phase_suffix: -DEV
+          filters:
+            branches:
+              only:
+                - /feature\/.*/
+                - develop
 
